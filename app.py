@@ -11,8 +11,8 @@ st.markdown("Developed by **Emdadul Haque Emon** | Master's in Horticulture")
 # --- 1. DATA LOADING ---
 @st.cache_data
 def load_data():
-    districts = pd.read_csv(r'C:\Users\Tc\Desktop\District_64_Verified_Final.csv', encoding='latin1')
-    crops = pd.read_csv(r'C:\Users\Tc\Desktop\Crop_Master_KS_Structured.csv', encoding='latin1')
+    districts = pd.read_csv('District_64_Verified_Final.csv', encoding='latin1')
+    crops = pd.read_csv('Crop_Master_KS_Structured.csv', encoding='latin1')
     return districts, crops
 
 df_dist, df_crop = load_data()
