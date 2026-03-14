@@ -1,0 +1,8 @@
+Crop Name,Summer_Tolerant,Target AEZ,KS1_MaxTemp,KS2_MinTemp,KS3_MinPH,KS4_MaxPH,KS5_MaxRain,KS6_LandType,Opt_TempH,Opt_TempL,Opt_Rain,Daylength
+Brinjal,1,"8, 9, 11, 12, 19, 28",38,10,5,8.2,2500,"Highland, Medium Highland",32,20,1500,Day-neutral
+Tomato,1,"8, 9, 11, 19, 28, 29",35,8,5,7.8,2200,Highland,30,15,1250,Day-neutral
+Potato,0,"1, 3, 4, 11, 25, 26",32,5,4.5,7.8,400,Highland,25,10,250,Day-neutral
+Cauliflower,0,"8, 9, 11, 19, 28",32,8,5,7.8,1600,"Highland, Medium Highland",25,10,1200,Day-neutral
+Cabbage,1,"8, 9, 11, 19, 28",32,5,5,8,1600,"Highland, Medium Highland",24,8,1200,Day-neutral
+Radish,1,"1, 2, 8, 9, 11, 25",34,8,5,7.8,1500,"Highland, Medium Highland",25,10,1000,Day-neutral
+Carrot,1,"1, 2, 3, 25, 26",32,8,5,7.5,1500,"Highland, Medium Highland",24,10,1000,Day-neutral
