@@ -145,8 +145,8 @@ st.markdown("""
 def load_data():
     try:
         # Update paths as needed for your local machine
-        districts = pd.read_csv(r'District_64_Verified_Final.csv', encoding='latin1')
-        crops = pd.read_csv(r'Crop_Master_KS_Updated.csv', encoding='latin1')
+        districts = pd.read_csv(r'C:\Users\Tc\Desktop\District_64_Verified_Final.csv', encoding='latin1')
+        crops = pd.read_csv(r'C:\Users\Tc\Desktop\Crop_Master_KS_Updated.csv', encoding='latin1')
         districts.columns = districts.columns.str.strip()
         crops.columns = crops.columns.str.strip()
         return districts, crops
@@ -174,7 +174,7 @@ def calculate_suitability_v3(d_row, c_row, season):
         temp_h, temp_l = d_row.get('Temp H (C avg)', 30)-7, d_row.get('Temp L (C avg)', 15)-4
         rain = d_row.get('Rain Avg (mm)', 100) * 0.1
     else:
-        temp_h, temp_l = d_row.get('Temp H (C avg)', 30), d_row.get('Temp L (C avg)', 15)
+        temp_h, temp_l = d_row.get('Temp H (C avg)', 30)+4, d_row.get('Temp L (C avg)', 15)+1
         rain = d_row.get('Rain Avg (mm)', 100)
 
     avg_t = (temp_h + temp_l) / 2
@@ -211,16 +211,20 @@ def calculate_suitability_v3(d_row, c_row, season):
         "Score": f"{sal_score}/10"
     })
     # 3. KILL SWITCHES
-    term_reason = None
+    raw_comparisons=[]
+    term_reasons = []
+    final_reason = None
     if season == "Summer" and c_row.get('Summer_Tolerant', 1) == 0:
         if temp_h > (c_row.get('KS1_MaxTemp', 35) + 1): 
-            term_reason = f"Extreme Heat ({temp_h}°C)"
-
-    if term_reason:
-        # Return empty/default values for unpacking consistency
-        return 0.0, f"🛑 TERMINATED: {term_reason}", aez_match, d_sal, c_sal_limit, raw_comparison
-
-    # 4. PHYSICAL SOIL LOGIC (Selective Alignment)
+                term_reasons.append(f"Extreme Heat ({temp_h}°C)")
+    if d_sal > (c_sal_limit * 5):
+        term_reasons.append(f"Toxic Salinity ({d_sal} dS/m)")
+    if term_reasons:
+        # Join all reasons found into one string
+        final_reason = " & ".join(term_reasons)
+        return 0.0, final_reason, "Biological Failure", aez_match, d_sal, c_sal_limit, raw_comparisons
+        
+       # 4. PHYSICAL SOIL LOGIC (Selective Alignment)
     texture_val = str(d_row.get('Soil Texture', '')).lower()
     crop_name = str(c_row.get('Crop Name', '')).lower()
     deep_rooted = ['carrot', 'radish', 'potato', 'onion', 'garlic', 'chili']
@@ -248,7 +252,7 @@ def calculate_suitability_v3(d_row, c_row, season):
     total = aez_score + temp_score + ph_score + rain_score + sal_score + texture_score
     final_score = max(0, min(total, 100))
 
-    return round(final_score, 2), texture_status, aez_match, d_sal, c_sal_limit, raw_comparison
+    return round(final_score, 2), final_reason, texture_status, aez_match, d_sal, c_sal_limit, raw_comparison
 
         
 
@@ -269,19 +273,18 @@ def main():
         )
 
     with top_col2:
-        sel_crop = st.selectbox(
-            "🌱 SELECT CROP", 
-            options=["Select a Crop"] + sorted(crop_df['Crop Name'].unique())
+        sel_crops = st.multiselect(
+            "🌱 SELECT CROPS", 
+            options=sorted(crop_df['Crop Name'].unique()), 
+            default=None
         )
 
     with top_col3:
         sel_season = st.radio("🗓️ SEASON", ["Rabi", "Summer"], horizontal=True)
 
-    if sel_dist == "Select a District" or sel_crop == "Select a Crop":
-        st.warning("Please select both a District and a Crop to begin the analysis.")
+    if sel_dist == "Select a District":
+        st.warning("Please select a district above to begin the analysis.")
         st.stop()
-
-    sel_crops = [sel_crop]
 
     # --- DISTRICT SUMMARY CARD ---
     d_data = dist_df[dist_df['District'] == sel_dist].iloc[0]
@@ -308,7 +311,7 @@ def main():
             c_data = crop_df[crop_df['Crop Name'] == crop].iloc[0]
             
             # (Calculation logic remains exactly the same...)
-            score, status, aez_match, d_sal, c_sal_limit, raw_list = calculate_suitability_v3(d_data, c_data, sel_season)
+            score, final_reason, status, aez_match, d_sal, c_sal_limit, raw_list = calculate_suitability_v3(d_data, c_data, sel_season)
             
             # Extraction of scores
             t_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Avg Temp"), 15)
@@ -332,11 +335,22 @@ def main():
                 "insight": silent_insight,
                 "table_data": raw_list
             })
-
-            # --- UI Display ---
+            
+            if final_reason:
+               st.error(f"🛑 **TERMINATED:** {final_reason}")
+    
+    # Dynamic Caption: Checks what is inside final_reason to show the right message
+               if "Heat" in final_reason and "Salinity" in final_reason:
+                st.caption("Crop is biologically unsuitable due to heat and salt stress.")
+               elif "Salinity" in final_reason:
+                st.caption("Lethal osmotic pressure. The crop cannot intake water due to salt concentration.")
+               elif "Heat" in final_reason:        
+                st.caption("Critical thermal limit reached. Pollen sterility or metabolic failure likely.")
+            else:
+    # Only show the expander/details if the crop isn't terminated
+               st.success("✅ Environment is within survival thresholds.")            # --- UI Display ---
             st.markdown(f'<div class="crop-header-btn"><span>🌱 {crop}</span><span class="percentage-badge">{score}%</span></div>', unsafe_allow_html=True)
             st.progress(score/100)
-            
             with st.expander("🔍 VIEW TECHNICAL DATA & AI ANALYSIS"):
                 st.table(pd.DataFrame(raw_list))
                 run_ai_insights(d_data, crop, score, aez_match, t_score, tex_score, s_score, sel_season)
