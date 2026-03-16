@@ -222,7 +222,6 @@ def calculate_suitability_v3(d_row, c_row, season):
     if term_reasons:
         # Join all reasons found into one string
         final_reason = " & ".join(term_reasons)
-        return 0.0, final_reason, "Biological Failure", aez_match, d_sal, c_sal_limit, raw_comparisons
         
        # 4. PHYSICAL SOIL LOGIC (Selective Alignment)
     texture_val = str(d_row.get('Soil Texture', '')).lower()
@@ -252,8 +251,15 @@ def calculate_suitability_v3(d_row, c_row, season):
     total = aez_score + temp_score + ph_score + rain_score + sal_score + texture_score
     final_score = max(0, min(total, 100))
 
-    return round(final_score, 2), final_reason, texture_status, aez_match, d_sal, c_sal_limit, raw_comparison
+    if final_reason:
+        final_score = 0.0
+        texture_status = "Biological Failure"
+    else:
+        # Normal math here
+        final_score = aez_score + temp_score + ph_score # etc...
+        texture_status = "Normal"
 
+    return round(final_score, 2), final_reason, texture_status, aez_match, d_sal, c_sal_limit, raw_comparison
         
 
 
