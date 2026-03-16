@@ -61,7 +61,7 @@ def generate_report(d_name, crop_results):
             p_text = str(row.get('Parameter', 'N/A')).encode('latin-1', 'replace').decode('latin-1')
             d_text = str(row.get('District Value', 'N/A')).encode('latin-1', 'replace').decode('latin-1')
             r_text = str(row.get('Requirement', 'N/A')).encode('latin-1', 'replace').decode('latin-1')
-            s_text = str(row.get('Score', 'N/A')).
+            s_text = str(row.get('Score', 'N/A')).encode('latin-1', 'replace').decode('latin-1')
         pdf.ln(10) # Gap before the next crop starts
 
     # Critical for Streamlit Cloud: Return as bytes
