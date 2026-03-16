@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 #################################
-from fpdf import FPDF
+from fpdf2 import FPDF
 import io
 
 def generate_report(d_name, crop_results):
