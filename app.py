@@ -55,7 +55,7 @@ def generate_report(d_name, crop_results):
         
         pdf.ln(10) 
 
-    return pdf.output() 
+    return bytes(pdf.output())
     ########################################
 
 
