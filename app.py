@@ -259,18 +259,19 @@ def main():
         )
 
     with top_col2:
-        sel_crops = st.multiselect(
-            "🌱 SELECT CROPS", 
-            options=sorted(crop_df['Crop Name'].unique()), 
-            default=None
+        sel_crop = st.selectbox(
+            "🌱 SELECT CROP", 
+            options=["Select a Crop"] + sorted(crop_df['Crop Name'].unique())
         )
 
     with top_col3:
         sel_season = st.radio("🗓️ SEASON", ["Rabi", "Summer"], horizontal=True)
 
-    if sel_dist == "Select a District":
-        st.warning("Please select a district above to begin the analysis.")
+    if sel_dist == "Select a District" or sel_crop == "Select a Crop":
+        st.warning("Please select both a District and a Crop to begin the analysis.")
         st.stop()
+
+    sel_crops = [sel_crop]
 
     # --- DISTRICT SUMMARY CARD ---
     d_data = dist_df[dist_df['District'] == sel_dist].iloc[0]
