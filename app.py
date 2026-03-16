@@ -339,7 +339,8 @@ def main():
                 label="📥 Download Full PDF Report",
                 data=pdf_bytes,
                 file_name=f"Report_{sel_dist}.pdf",
-                mime="application/pdf"
+                mime="application/pdf",
+                key=f"download_btn_{sel_dist}_v1"
             )            
         "Developed by Emdadul Haque Emon"
 if __name__ == "__main__":
