@@ -6,56 +6,67 @@ from fpdf import FPDF
 import io
 
 def generate_report(d_name, crop_results):
-    pdf = FPDF()
+    # Initialize PDF in A4 Portrait
+    pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.add_page()
     
     # --- Professional Header ---
     pdf.set_font("Helvetica", 'B', 16)
+    pdf.set_text_color(46, 125, 50) # Dark Green for Agriculture
     pdf.cell(0, 10, f"Agricultural Suitability Analysis: {d_name}", ln=True, align='C')
+    
+    pdf.set_font("Helvetica", 'I', 10)
+    pdf.set_text_color(100, 100, 100) # Gray
+    pdf.cell(0, 8, f"Report Generated: 2026-03-17", ln=True, align='C')
     pdf.ln(5)
 
     for res in crop_results:
-        # 1. Title & Score
+        # --- 1. Crop Title & Overall Score ---
         pdf.set_font("Helvetica", 'B', 14)
-        pdf.set_fill_color(230, 230, 230)
-        pdf.cell(0, 10, f"Crop: {res['crop']} | Score: {res['score']}%", ln=True, fill=True)
+        pdf.set_fill_color(230, 245, 230) # Light Green Background
+        pdf.set_text_color(0, 0, 0)
+        # Use a safe encoding for the crop name
+        crop_title = str(res['crop']).encode('latin-1', 'replace').decode('latin-1')
+        pdf.cell(0, 12, f"  🌱 Crop: {crop_title} | Suitability Score: {res['score']}%", ln=True, fill=True)
         
-        # 2. Insight
+        # --- 2. Agronomist Insight ---
         pdf.set_font("Helvetica", '', 11)
         pdf.ln(2)
-        pdf.multi_cell(0, 7, txt=res['insight'])
-        pdf.ln(5)
+        # Clean the insight text (remove asterisks used for bolding in Streamlit)
+        clean_insight = str(res['insight']).replace("**", "").encode('latin-1', 'replace').decode('latin-1')
+        pdf.multi_cell(0, 7, txt=clean_insight)
+        pdf.ln(4)
 
-        # --- 3. THE TECHNICAL TABLE (Fixed Columns) ---
+        # --- 3. Technical Comparison Table ---
         pdf.set_font("Helvetica", 'B', 9)
-        pdf.set_fill_color(245, 245, 245)
+        pdf.set_fill_color(240, 240, 240)
         
-        # We define 4 specific widths to fit the page (Total = 190mm)
-        w_param = 45   # Parameter name
+        # Defined column widths (Total = 190mm)
+        w_param = 45   # Parameter
         w_dist = 45    # District Value
-        w_req = 65     # Requirement (usually the longest text)
+        w_req = 65     # Requirement
         w_score = 35   # Score
         
-        # Table Headers
-        pdf.cell(w_param, 8, "Parameter", border=1, fill=True)
-        pdf.cell(w_dist, 8, "District Value", border=1, fill=True)
-        pdf.cell(w_req, 8, "Requirement", border=1, fill=True)
-        pdf.cell(w_score, 8, "Score", border=1, fill=True)
+        # Headers
+        pdf.cell(w_param, 8, "Parameter", border=1, fill=True, align='C')
+        pdf.cell(w_dist, 8, "District Value", border=1, fill=True, align='C')
+        pdf.cell(w_req, 8, "Requirement", border=1, fill=True, align='C')
+        pdf.cell(w_score, 8, "Score", border=1, fill=True, align='C')
         pdf.ln()
 
         # Table Rows
         pdf.set_font("Helvetica", '', 8)
         for row in res['table_data']:
-            # .get() must match the EXACT keys in your raw_list
-            pdf.cell(w_param, 7, str(row.get('Parameter', 'N/A')), border=1).encode('latin-1', 'replace').decode('latin-1')
-            pdf.cell(w_dist, 7, str(row.get('District Value', 'N/A')), border=1).encode('latin-1', 'replace').decode('latin-1')
-            pdf.cell(w_req, 7, str(row.get('Requirement', 'N/A')), border=1).encode('latin-1', 'replace').decode('latin-1')
-            pdf.cell(w_score, 7, str(row.get('Score', 'N/A')), border=1).encode('latin-1', 'replace').decode('latin-1')
-            pdf.ln()
-        
-        pdf.ln(10) 
+            # Safe extraction and encoding for Linux/Cloud compatibility
+            p_text = str(row.get('Parameter', 'N/A')).encode('latin-1', 'replace').decode('latin-1')
+            d_text = str(row.get('District Value', 'N/A')).encode('latin-1', 'replace').decode('latin-1')
+            r_text = str(row.get('Requirement', 'N/A')).encode('latin-1', 'replace').decode('latin-1')
+            s_text = str(row.get('Score', 'N/A')).
+        pdf.ln(10) # Gap before the next crop starts
 
+    # Critical for Streamlit Cloud: Return as bytes
     return bytes(pdf.output())
+     
     ########################################
 
 
