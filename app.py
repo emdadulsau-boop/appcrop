@@ -248,124 +248,99 @@ def main():
     dist_df, crop_df = load_data()
     if dist_df is None: return
 
-    with st.sidebar:
-        st.markdown("### ⚙️ SETTINGS")
-        sel_dist = st.selectbox("DISTRICT", options=["Select a District"] + sorted(dist_df['District'].unique()))
-        sel_crops = st.multiselect("CROPS", options=sorted(crop_df['Crop Name'].unique()), default=None)
-        sel_season = st.radio("SEASON", ["Rabi", "Summer"])
-        st.markdown("---")
-        st.caption("v3.7 | Professional Export Mode")
+    # --- TOP SELECTION BAR ---
+    # Creating three columns at the top for a horizontal selection experience
+    top_col1, top_col2, top_col3 = st.columns([1.5, 2, 1])
+
+    with top_col1:
+        sel_dist = st.selectbox(
+            "📍 SELECT DISTRICT", 
+            options=["Select a District"] + sorted(dist_df['District'].unique())
+        )
+
+    with top_col2:
+        sel_crops = st.multiselect(
+            "🌱 SELECT CROPS", 
+            options=sorted(crop_df['Crop Name'].unique()), 
+            default=None
+        )
+
+    with top_col3:
+        sel_season = st.radio("🗓️ SEASON", ["Rabi", "Summer"], horizontal=True)
 
     if sel_dist == "Select a District":
-        st.warning("Please select a district in the sidebar to begin the analysis.")
+        st.warning("Please select a district above to begin the analysis.")
         st.stop()
 
+    # --- DISTRICT SUMMARY CARD ---
     d_data = dist_df[dist_df['District'] == sel_dist].iloc[0]
 
     st.markdown(f"""
     <div class="district-card">
-        <h2 style="margin:0; font-size:1.3rem;">📍 Location: {sel_dist}</h2>
-        <p style="margin:10px 0 0 0; color:white;">
-             <b>AEZ:</b> <span class="sky-blue-val">{d_data.get('AEZ')}</span> &nbsp; | &nbsp; 
-            <b>Texture:</b> <span class="sky-blue-val">{d_data.get('Soil Texture')}</span> &nbsp; | &nbsp; 
-            <b>pH:</b> <span class="sky-blue-val">{d_data.get('pH avg')}</span> &nbsp; | &nbsp; 
+        <h2 style="margin:0; font-size:1.1rem;">Active Analysis: {sel_dist} District</h2>
+        <p style="margin:10px 0 0 0; color:white; font-size:0.9rem;">
+            <b>AEZ:</b> <span class="sky-blue-val">{d_data.get('AEZ')}</span> | 
+            <b>Texture:</b> <span class="sky-blue-val">{d_data.get('Soil Texture')}</span> | 
+            <b>pH:</b> <span class="sky-blue-val">{d_data.get('pH avg')}</span> | 
             <b>Salinity:</b> <span class="sky-blue-val">{d_data.get('Soil Salinity')}</span>
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # 1. Initialize the report list BEFORE the loop
     report_data = []
     
     if not sel_crops:
-        st.info("Select crops in the sidebar.")
+        st.info("Please select one or more crops to view suitability scores.")
     else:
+        # --- YOUR EXISTING CROP LOOP ---
         for crop in sel_crops:
             c_data = crop_df[crop_df['Crop Name'] == crop].iloc[0]
             
-            # --- CALCULATE DATA ---
+            # (Calculation logic remains exactly the same...)
             score, status, aez_match, d_sal, c_sal_limit, raw_list = calculate_suitability_v3(d_data, c_data, sel_season)
             
-            # --- EXTRACT SCORES FOR INSIGHT ---
+            # Extraction of scores
             t_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Avg Temp"), 15)
             tex_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Root Zone Suitability"), 10)
             s_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Salinity"), 10)
             
-            ans_key = f"ai_answer_{crop}"
-            
-            # --- SILENT INSIGHT LOGIC (Correctly Indented) ---
+            # Silent Insight Generation
             reasons1 = []
-            if not aez_match: 
-                reasons1.append("outside primary AEZ target zones")
-            if t_score < 15: 
-                reasons1.append("temperatures outside metabolic optimum")
+            if not aez_match: reasons1.append("outside primary AEZ target zones")
+            if t_score < 15: reasons1.append("temperatures outside metabolic optimum")
             if tex_score < 0: 
                 texture = d_data.get('Soil Texture', 'unknown')
                 reasons1.append(f"mechanical barrier from {texture} texture")
-            if s_score <= 0: 
-                reasons1.append("salinity exceeds variety safety threshold")
+            if s_score <= 0: reasons1.append("salinity exceeds variety safety threshold")
             
-            if not reasons1:
-                silent_insight = f"Analysis: {crop} is in its ideal environment! All parameters are optimized."
-            else:
-                summary = " and ".join(reasons1)
-                silent_insight = f"Analysis: The score is {int(score)}% because it is {summary}."
+            silent_insight = f"Analysis: {crop} is optimized." if not reasons1 else f"Analysis: {int(score)}% due to {', '.join(reasons1)}."
 
-            # --- STORE FOR PDF ---
             report_data.append({
                 "crop": crop,
                 "score": score,
-                "insight": silent_insight.replace("**", ""),
+                "insight": silent_insight,
                 "table_data": raw_list
             })
 
-            # --- UI DISPLAY ---
+            # --- UI Display ---
             st.markdown(f'<div class="crop-header-btn"><span>🌱 {crop}</span><span class="percentage-badge">{score}%</span></div>', unsafe_allow_html=True)
             st.progress(score/100)
             
-            st.markdown('<div class="details-box">', unsafe_allow_html=True)
-            if "🛑" in status:
-                st.error(status)
-            else:
-                col1, col2 = st.columns([1, 2])
-                with col1:
-                    st.write(f"**AEZ Status:** {'✅ Match' if aez_match else '❌ No Match'}")
-                with col2:
-                    warning_icon = "⚠️" if d_sal > c_sal_limit else ""
-                    st.write(f"**Salinity Analysis:** {warning_icon} {d_sal} dS/m (Limit: {c_sal_limit})")            
-            
-                with st.expander("🔍 DETAILED TECHNICAL COMPARISON"):
-                    st.table(pd.DataFrame(raw_list))
-            st.markdown('</div>', unsafe_allow_html=True)
+            with st.expander("🔍 VIEW TECHNICAL DATA & AI ANALYSIS"):
+                st.table(pd.DataFrame(raw_list))
+                run_ai_insights(d_data, crop, score, aez_match, t_score, tex_score, s_score, sel_season)
 
-            with st.expander("💡 OPEN AI AGRONOMIST ANALYSIS"):
-                run_ai_insights(
-                    d_row=d_data, 
-                    crop_name=crop, 
-                    total=score, 
-                    aez_match=aez_match, 
-                    temp_score=t_score, 
-                    texture_score=tex_score, 
-                    sal_score=s_score, 
-                    season=sel_season
-                )
-
-        # --- EXPORT DATA SECTION (Outside the Loop) ---
+        # --- EXPORT SECTION AT BOTTOM ---
         st.markdown("---")
-        st.markdown("### 📄 EXPORT DATA")
         if report_data:
-            # Generate PDF once for all selected crops
             pdf_bytes = generate_report(sel_dist, report_data)
             st.download_button(
-                label="Download Professional PDF Report",
+                label="📥 Download Full PDF Report",
                 data=pdf_bytes,
-                file_name=f"Suitability_Report_{sel_dist}.pdf",
-                mime="application/pdf",
-                key="main_download_btn"
-            )
-            
-            # Temporary debug line
-        st.write(f"Debug: {crop} has {len(raw_list)} parameters in raw_list")
+                file_name=f"Report_{sel_dist}.pdf",
+                mime="application/pdf"
+            )            
+        "Developed by Emdadul Haque Emon"
 if __name__ == "__main__":
 
   main()
