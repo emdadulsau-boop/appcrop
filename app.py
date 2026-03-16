@@ -47,15 +47,15 @@ def generate_report(d_name, crop_results):
         pdf.set_font("Helvetica", '', 8)
         for row in res['table_data']:
             # .get() must match the EXACT keys in your raw_list
-            pdf.cell(w_param, 7, str(row.get('Parameter', 'N/A')), border=1)
-            pdf.cell(w_dist, 7, str(row.get('District Value', 'N/A')), border=1)
-            pdf.cell(w_req, 7, str(row.get('Requirement', 'N/A')), border=1)
-            pdf.cell(w_score, 7, str(row.get('Score', 'N/A')), border=1)
+            pdf.cell(w_param, 7, str(row.get('Parameter', 'N/A')), border=1).encode('latin-1', 'replace').decode('latin-1')
+            pdf.cell(w_dist, 7, str(row.get('District Value', 'N/A')), border=1).encode('latin-1', 'replace').decode('latin-1')
+            pdf.cell(w_req, 7, str(row.get('Requirement', 'N/A')), border=1).encode('latin-1', 'replace').decode('latin-1')
+            pdf.cell(w_score, 7, str(row.get('Score', 'N/A')), border=1).encode('latin-1', 'replace').decode('latin-1')
             pdf.ln()
         
         pdf.ln(10) 
 
-    return pdf.output()
+    return bytes(pdf.output())
     ########################################
 
 
