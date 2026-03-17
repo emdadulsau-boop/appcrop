@@ -274,20 +274,16 @@ def main():
     top_col1, top_col2, top_col3 = st.columns([1.5, 2, 1])
     sel_dist = st.session_state.get("confirmed_dist", "Select a District")
     with top_col1:
-        # Create a placeholder for the district selector
-         dist_placeholder = st.empty()
-
-# Only show the selectbox if a district hasn't been "confirmed" yet
-    if "confirmed_dist" not in st.session_state:
-            with dist_placeholder:
-                 sel_dist = st.selectbox("🌍 Select District", dist_df['District'], key="dist_selector")
-                 if sel_dist != "Select a District":
-                    st.session_state.confirmed_dist = sel_dist
-                    st.rerun() # This forces the page to refresh and closes the keyboard/list
-    else:
-        # Show a "Selected" message and a button to reset
+      if "confirmed_dist" not in st.session_state:
+        # Show selectbox if nothing is confirmed
+        choice = st.selectbox("🌍 Select District", dist_df['District'], key="dist_selector")
+        if choice != "Select a District":
+            st.session_state.confirmed_dist = choice
+            st.rerun()
+      else:
+        # Show the name and the button INSIDE the column
         st.write(f"📍 **{sel_dist}**")
-        if st.button("🔄 Change"):
+        if st.button("🔄 Change", key="change_dist_btn"):
             del st.session_state.confirmed_dist
             st.rerun()
     with top_col2:
