@@ -260,7 +260,7 @@ def calculate_suitability_v3(d_row, c_row, season):
         texture_status = "Biological Failure"
     else:
         # Normal math here
-        final_score = aez_score + temp_score + ph_score # etc...
+        final_score = aez_score + temp_score + ph_score + rain_score + sal_score + texture_score # etc...
         texture_status = "Normal"
 
     return round(final_score, 2), final_reason, texture_status, aez_match, d_sal, c_sal_limit, raw_comparison
