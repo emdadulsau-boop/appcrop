@@ -6,6 +6,9 @@ from fpdf import FPDF
 import io
 import time
 
+if 'last_crop' not in st.session_state:
+    st.session_state.last_crop = None
+    
 def generate_report(d_name, crop_results):
     # Initialize PDF
     pdf = FPDF(orientation='P', unit='mm', format='A4')
@@ -265,7 +268,7 @@ def calculate_suitability_v3(d_row, c_row, season):
 
 
 def main():
-    st.markdown("<h1> Syl-64 Crop Suit Analyzer </h1>", unsafe_allow_html=True)
+    st.markdown("<h3> Syl-64 Crop Suit Analyzer </h3>", unsafe_allow_html=True)
     dist_df, crop_df = load_data()
     if dist_df is None: return
 
@@ -281,6 +284,7 @@ def main():
         )
 
     with top_col2:
+        spin_placeholder = st.empty()
         sel_crops = st.multiselect(
             "🌱 SELECT CROPS", 
             options=sorted(crop_df['Crop Name'].unique()), 
@@ -288,8 +292,10 @@ def main():
         )
         # 4-second delay only if crops are selected
         if sel_crops:
-            with st.spinner(f"Running district-crop suit analysis..."):
-                time.sleep(4)
+            if st.session_state.last_crop != sel_crops:
+                with st.spinner(f"Running district-crop suit analysis..."):
+                    time.sleep(4)
+                st.session_state.last_crop = sel_crops
 
     with top_col3:
         sel_season = st.radio("🗓️ SEASON", ["Rabi", "Summer"], horizontal=True)
