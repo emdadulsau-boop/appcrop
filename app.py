@@ -274,10 +274,16 @@ def main():
     top_col1, top_col2, top_col3 = st.columns([1.5, 2, 1])
 
     with top_col1:
-        sel_dist = st.selectbox(
-            "📍 SELECT DISTRICT", 
-            options=["Select a District"] + sorted(dist_df['District'].unique())
-        )
+        # Create a placeholder for the district selector
+         dist_placeholder = st.empty()
+
+# Only show the selectbox if a district hasn't been "confirmed" yet
+        if "confirmed_dist" not in st.session_state:
+            with dist_placeholder:
+                 sel_dist = st.selectbox("🌍 Select District", district_options, key="dist_selector")
+                 if sel_dist != "Select a District":
+                    st.session_state.confirmed_dist = sel_dist
+                    st.rerun() # This forces the page to refresh and closes the keyboard/list
 
     with top_col2:
         sel_crops = st.multiselect(
