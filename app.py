@@ -280,7 +280,7 @@ def main():
 # Only show the selectbox if a district hasn't been "confirmed" yet
     if "confirmed_dist" not in st.session_state:
             with dist_placeholder:
-                 sel_dist = st.selectbox("🌍 Select District", district_options, key="dist_selector")
+                 sel_dist = st.selectbox("🌍 Select District", dist_df['District'], key="dist_selector")
                  if sel_dist != "Select a District":
                     st.session_state.confirmed_dist = sel_dist
                     st.rerun() # This forces the page to refresh and closes the keyboard/list
