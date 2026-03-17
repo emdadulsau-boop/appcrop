@@ -270,39 +270,44 @@ def main():
     if dist_df is None: return
 
     # --- TOP SELECTION BAR ---
-    # Creating three columns at the top for a horizontal selection experience
     top_col1, top_col2, top_col3 = st.columns([1.5, 2, 1])
-    sel_dist = st.session_state.get("confirmed_dist", "Select a District")
+    
+    # Initialize session state for district if it doesn't exist
+    if "confirmed_dist" not in st.session_state:
+        st.session_state.confirmed_dist = "Select a District"
+
     with top_col1:
-      if "confirmed_dist" not in st.session_state:
-        # Show selectbox if nothing is confirmed
-        choice = st.selectbox("🌍 Select District", dist_df['District'], key="dist_selector")
-        if choice != "Select a District":
-            st.session_state.confirmed_dist = choice
-            st.rerun()
-      else:
-        # Show the name and the button INSIDE the column
-         st.write(f"📍 **{sel_dist}**")
-         if st.button("🔄 Change", key="change_dist_btn"):
-            del st.session_state.confirmed_dist
-            st.rerun()
+        # If no district is selected, show the selectbox
+        if st.session_state.confirmed_dist == "Select a District":
+            choice = st.selectbox("🌍 Select District", dist_df['District'], key="dist_selector")
+            if choice != "Select a District":
+                st.session_state.confirmed_dist = choice
+                st.rerun()
+        else:
+            # Display only the name (no button). This closes the list and keyboard.
+            st.markdown(f"📍 **{st.session_state.confirmed_dist}**")
+
+    # Set the variable for the rest of the script
+    sel_dist = st.session_state.confirmed_dist
+
     with top_col2:
         sel_crops = st.multiselect(
             "🌱 SELECT CROPS", 
             options=sorted(crop_df['Crop Name'].unique()), 
             default=None
-         )
+        )
+        # The 4-second wait is triggered here only if crops are selected
         if sel_crops:
-           with st.spinner(f"Running district-crop suit analysis for {sel_crops}..."):
+            with st.spinner(f"Running district-crop suit analysis..."):
                 time.sleep(4)
-        
 
     with top_col3:
         sel_season = st.radio("🗓️ SEASON", ["Rabi", "Summer"], horizontal=True)
 
+    # Stop script if district isn't chosen yet
     if sel_dist == "Select a District":
-       st.info("Please select a district to view the summary.")
-       st.stop()
+        st.info("Please select a district to view the summary.")
+        st.stop()
 
     # --- DISTRICT SUMMARY CARD ---
     d_data = dist_df[dist_df['District'] == sel_dist].iloc[0]
@@ -324,19 +329,15 @@ def main():
     if not sel_crops:
         st.info("Please select one or more crops to view suitability scores.")
     else:
-        # --- YOUR EXISTING CROP LOOP ---
         for crop in sel_crops:
             c_data = crop_df[crop_df['Crop Name'] == crop].iloc[0]
             
-            # (Calculation logic remains exactly the same...)
             score, final_reason, status, aez_match, d_sal, c_sal_limit, raw_list = calculate_suitability_v3(d_data, c_data, sel_season)
             
-            # Extraction of scores
             t_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Avg Temp"), 15)
             tex_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Root Zone Suitability"), 10)
             s_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Salinity"), 10)
             
-            # Silent Insight Generation
             reasons1 = []
             if not aez_match: reasons1.append("outside primary AEZ target zones")
             if t_score < 15: reasons1.append("temperatures outside metabolic optimum")
@@ -355,25 +356,22 @@ def main():
             })
             
             if final_reason:
-               st.error(f"🛑 **TERMINATED:** {final_reason}")
-    
-    # Dynamic Caption: Checks what is inside final_reason to show the right message
-               if "Heat" in final_reason and "Salinity" in final_reason:
-                st.caption("Crop is biologically unsuitable due to heat and salt stress.")
-               elif "Salinity" in final_reason:
-                st.caption("Lethal osmotic pressure. The crop cannot intake water due to salt concentration.")
-               elif "Heat" in final_reason:        
-                st.caption("Critical thermal limit reached. Pollen sterility or metabolic failure likely.")
+                st.error(f"🛑 **TERMINATED:** {final_reason}")
+                if "Heat" in final_reason and "Salinity" in final_reason:
+                    st.caption("Crop is biologically unsuitable due to heat and salt stress.")
+                elif "Salinity" in final_reason:
+                    st.caption("Lethal osmotic pressure. The crop cannot intake water due to salt concentration.")
+                elif "Heat" in final_reason:        
+                    st.caption("Critical thermal limit reached. Pollen sterility or metabolic failure likely.")
             else:
-    # Only show the expander/details if the crop isn't terminated
-               st.success("✅ Environment is within survival thresholds.")            # --- UI Display ---
+                st.success("✅ Environment is within survival thresholds.")
+
             st.markdown(f'<div class="crop-header-btn"><span>🌱 {crop}</span><span class="percentage-badge">{score}%</span></div>', unsafe_allow_html=True)
             st.progress(score/100)
             with st.expander("🔍 VIEW TECHNICAL DATA & AI ANALYSIS"):
                 st.table(pd.DataFrame(raw_list))
                 run_ai_insights(d_data, crop, score, aez_match, t_score, tex_score, s_score, sel_season)
 
-        # --- EXPORT SECTION AT BOTTOM ---
         st.markdown("---")
         if report_data:
             pdf_bytes = generate_report(sel_dist, report_data)
@@ -384,7 +382,7 @@ def main():
                 mime="application/pdf",
                 key=f"download_btn_{sel_dist}_v1"
             )            
-        "Developed by Emdadul Haque Emon"
-if __name__ == "__main__":
+        st.write("Developed by Emdadul Haque Emon")
 
-  main()
+if __name__ == "__main__":
+    main()
