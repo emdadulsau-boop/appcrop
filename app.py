@@ -283,6 +283,9 @@ def main():
             "🌱 SELECT CROPS", 
             options=sorted(crop_df['Crop Name'].unique()), 
             default=None
+        if sel_crop:
+           with st.spinner(f"Running district-crop suit analysis for {sel_crop}...")
+                time.sleep(4)
         )
 
     with top_col3:
