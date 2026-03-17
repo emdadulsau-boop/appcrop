@@ -284,7 +284,7 @@ def main():
             options=sorted(crop_df['Crop Name'].unique()), 
             default=None
          )
-        if sel_crop:
+        if sel_crops:
            with st.spinner(f"Running district-crop suit analysis for {sel_crop}..."):
                 time.sleep(4)
         
