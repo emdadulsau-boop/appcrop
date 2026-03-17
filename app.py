@@ -282,8 +282,8 @@ def main():
             st.rerun()
       else:
         # Show the name and the button INSIDE the column
-        st.write(f"📍 **{sel_dist}**")
-        if st.button("🔄 Change", key="change_dist_btn"):
+         st.write(f"📍 **{sel_dist}**")
+         if st.button("🔄 Change", key="change_dist_btn"):
             del st.session_state.confirmed_dist
             st.rerun()
     with top_col2:
