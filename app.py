@@ -359,9 +359,9 @@ def main():
 
             st.markdown(f'<div class="crop-header-btn"><span>🌱 {crop}</span><span class="percentage-badge">{score}%</span></div>', unsafe_allow_html=True)
             st.progress(score/100)
-            with st.expander("🔍 VIEW TECHNICAL DATA & AI ANALYSIS"):
-                st.table(pd.DataFrame(raw_list))
-                with st.spinner("🧠 AI Researcher is synthesizing insights..."):
+          with st.expander("🔍 VIEW TECHNICAL DATA & AI ANALYSIS"):
+              st.table(pd.DataFrame(raw_list))
+           with st.spinner("🧠 AI Researcher is synthesizing insights..."):
                     run_ai_insights(d_data, crop, score, aez_match, t_score, tex_score, s_score, sel_season)
 
         # --- EXPORT SECTION ---
