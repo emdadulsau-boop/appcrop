@@ -272,7 +272,7 @@ def main():
     # --- TOP SELECTION BAR ---
     # Creating three columns at the top for a horizontal selection experience
     top_col1, top_col2, top_col3 = st.columns([1.5, 2, 1])
-
+    sel_dist = st.session_state.get("confirmed_dist", "Select a District")
     with top_col1:
         # Create a placeholder for the district selector
          dist_placeholder = st.empty()
