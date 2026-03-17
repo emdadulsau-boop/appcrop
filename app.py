@@ -267,57 +267,39 @@ def calculate_suitability_v3(d_row, c_row, season):
 def main():
     st.markdown("<h1> Syl-64 Crop Suit Analyzer </h1>", unsafe_allow_html=True)
     dist_df, crop_df = load_data()
-    if dist_df is None: 
-        st.error("Data could not be loaded.")
-        return
+    if dist_df is None: return
 
-    # --- 1. STATE MANAGEMENT (The Engine) ---
-    # We check if a district is already saved in the 'notebook'
-    if "confirmed_dist" not in st.session_state:
-        st.session_state.confirmed_dist = None
-
-    # --- 2. TOP SELECTION BAR ---
+    # --- TOP SELECTION BAR ---
     top_col1, top_col2, top_col3 = st.columns([1.5, 2, 1])
-
+    
     with top_col1:
-        if st.session_state.confirmed_dist is None:
-            # This is the FIRST thing the user sees
-            choice = st.selectbox(
-                "🌍 Select District", 
-                options=["Select a District"] + list(dist_df['District'].unique()), 
-                key="dist_selector"
-            )
-            if choice != "Select a District":
-                st.session_state.confirmed_dist = choice
-                st.rerun()
-        else:
-            # Once selected, show ONLY the name to close the keyboard/list
-            st.markdown(f"📍 **{st.session_state.confirmed_dist}**")
+        # Standard selectbox - simple and reliable
+        sel_dist = st.selectbox(
+            "🌍 Select District", 
+            options=["Select a District"] + list(dist_df['District'].unique()), 
+            key="dist_selector"
+        )
 
-    # Assign the confirmed value to sel_dist for the rest of the app
-    sel_dist = st.session_state.confirmed_dist
-
-    # --- 3. STOP IF NO DISTRICT ---
-    if sel_dist is None:
-        st.info("👋 Welcome! Please select a district in the top left to begin.")
-        st.stop()
-
-    # --- 4. CROP & SEASON SELECTION ---
     with top_col2:
         sel_crops = st.multiselect(
             "🌱 SELECT CROPS", 
             options=sorted(crop_df['Crop Name'].unique()), 
             default=None
         )
+        # 4-second delay only if crops are selected
         if sel_crops:
-            with st.spinner("Processing genomic & weather data..."):
+            with st.spinner(f"Running district-crop suit analysis..."):
                 time.sleep(4)
 
     with top_col3:
         sel_season = st.radio("🗓️ SEASON", ["Rabi", "Summer"], horizontal=True)
 
-    # --- 5. DISTRICT SUMMARY CARD ---
-    # Now we are safe to pull data because sel_dist is guaranteed to exist
+    # --- STOP LOGIC ---
+    if sel_dist == "Select a District":
+        st.info("Please select a district to view the summary.")
+        st.stop()
+
+    # --- DISTRICT SUMMARY CARD ---
     d_data = dist_df[dist_df['District'] == sel_dist].iloc[0]
 
     st.markdown(f"""
@@ -335,20 +317,21 @@ def main():
     report_data = []
     
     if not sel_crops:
-        st.info(f"Please select one or more crops to analyze for {sel_dist}.")
+        st.info("Please select one or more crops to view suitability scores.")
     else:
         # --- CROP ANALYSIS LOOP ---
         for crop in sel_crops:
             c_data = crop_df[crop_df['Crop Name'] == crop].iloc[0]
             
-            # Use your suitability function
+            # Calculation logic
             score, final_reason, status, aez_match, d_sal, c_sal_limit, raw_list = calculate_suitability_v3(d_data, c_data, sel_season)
             
-            # Technical Data Extraction
+            # Extraction of scores
             t_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Avg Temp"), 15)
             tex_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Root Zone Suitability"), 10)
             s_score = next((float(item['Score'].split('/')[0]) for item in raw_list if item['Parameter'] == "Salinity"), 10)
             
+            # Silent Insight Generation
             reasons1 = []
             if not aez_match: reasons1.append("outside primary AEZ target zones")
             if t_score < 15: reasons1.append("temperatures outside metabolic optimum")
@@ -389,7 +372,7 @@ def main():
                 data=pdf_bytes,
                 file_name=f"Report_{sel_dist}.pdf",
                 mime="application/pdf",
-                key=f"download_btn_{sel_dist}"
+                key=f"download_btn_{sel_dist}_final"
             )            
         st.write("Developed by Emdadul Haque Emon")
 
