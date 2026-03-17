@@ -4,6 +4,7 @@ import pandas as pd
 #################################
 from fpdf import FPDF
 import io
+import time
 
 def generate_report(d_name, crop_results):
     # Initialize PDF
