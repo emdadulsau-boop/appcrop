@@ -278,7 +278,7 @@ def main():
          dist_placeholder = st.empty()
 
 # Only show the selectbox if a district hasn't been "confirmed" yet
-        if "confirmed_dist" not in st.session_state:
+    if "confirmed_dist" not in st.session_state:
             with dist_placeholder:
                  sel_dist = st.selectbox("🌍 Select District", district_options, key="dist_selector")
                  if sel_dist != "Select a District":
