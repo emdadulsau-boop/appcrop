@@ -284,7 +284,12 @@ def main():
                  if sel_dist != "Select a District":
                     st.session_state.confirmed_dist = sel_dist
                     st.rerun() # This forces the page to refresh and closes the keyboard/list
-
+   else:
+        # Show a "Selected" message and a button to reset
+        st.write(f"📍 **{sel_dist}**")
+        if st.button("🔄 Change"):
+            del st.session_state.confirmed_dist
+            st.rerun()
     with top_col2:
         sel_crops = st.multiselect(
             "🌱 SELECT CROPS", 
