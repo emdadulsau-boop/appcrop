@@ -285,7 +285,7 @@ def main():
             default=None
          )
         if sel_crops:
-           with st.spinner(f"Running district-crop suit analysis for {sel_crop}..."):
+           with st.spinner(f"Running district-crop suit analysis for {sel_crops}..."):
                 time.sleep(4)
         
 
