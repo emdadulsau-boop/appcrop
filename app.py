@@ -299,9 +299,7 @@ def main():
     with top_col3:
         sel_season = st.radio("🗓️ SEASON", ["Rabi", "Summer"], horizontal=True)
 
-    if sel_dist == "Select a District":
-        st.warning("Please select a district above to begin the analysis.")
-        st.stop()
+  
 
     # --- DISTRICT SUMMARY CARD ---
     d_data = dist_df[dist_df['District'] == sel_dist].iloc[0]
