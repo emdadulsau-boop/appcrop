@@ -149,8 +149,8 @@ st.markdown("""
 def load_data():
     try:
         # Update paths as needed for your local machine
-        districts = pd.read_csv(r'C:\Users\Tc\Desktop\District_64_Verified_Final.csv', encoding='latin1')
-        crops = pd.read_csv(r'C:\Users\Tc\Desktop\Crop_Master_KS_Updated.csv', encoding='latin1')
+        districts = pd.read_csv('District_64_Verified_Final.csv', encoding='latin1')
+        crops = pd.read_csv('Crop_Master_KS_Updated.csv', encoding='latin1')
         districts.columns = districts.columns.str.strip()
         crops.columns = crops.columns.str.strip()
         return districts, crops
